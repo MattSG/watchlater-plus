@@ -1,0 +1,61 @@
+name: Publish extension
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag, such as v0.1.0
+        required: true
+      store:
+        type: choice
+        options: [chrome, firefox]
+        default: chrome
+      publish:
+        description: Submit for store review (Chrome otherwise uploads draft)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: publish-${{ inputs.store }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: windows-latest
+    environment: extension-stores
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify version tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: node -e "if(process.env.RELEASE_TAG !== 'v'+require('./package.json').version) process.exit(1)"
+      - run: npm ci
+      - run: npm run validate
+      - run: npx playwright install chromium firefox
+      - run: npm run test:browser
+      - run: npm run test:firefox
+      - name: Chrome Web Store upload
+        if: inputs.store == 'chrome'
+        env:
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
+          CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISH: ${{ inputs.publish }}
+        run: node scripts/publish-chrome.cjs
+      - name: Firefox Add-ons submission
+        if: inputs.store == 'firefox' && inputs.publish
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+        run: npx web-ext sign --source-dir dist/firefox --channel listed --amo-metadata amo-metadata.json --approval-timeout 0
+      - name: Firefox draft instructions
+        if: inputs.store == 'firefox' && !inputs.publish
+        run: Write-Output 'Firefox submission skipped. Enable publish to submit to AMO review.'

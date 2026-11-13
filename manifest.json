@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Watch Later+",
+  "version": "0.1.0",
+  "description": "Sort, filter, select and clean up your YouTube Watch Later playlist.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["core.js", "content.js"],
+      "css": ["content.css"],
+      "run_at": "document_start"
+    }
+  ]
+}

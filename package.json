@@ -1,0 +1,37 @@
+{
+  "name": "watchlater-plus",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "test:browser": "node scripts/browser-harness.cjs",
+    "check": "node --check content.js && node --check core.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build": "node scripts/build.cjs",
+    "lint:firefox": "web-ext lint --source-dir dist/firefox --warnings-as-errors",
+    "test:firefox": "node scripts/firefox-harness.cjs",
+    "validate": "npm run lint && npm run format:check && npm test && npm run build && npm run lint:firefox"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "fflate": "^0.8.3",
+    "globals": "^17.14.0",
+    "jsdom": "^26.1.0",
+    "playwright": "^1.65.0",
+    "prettier": "^3.10.1",
+    "selenium-webdriver": "^4.51.0",
+    "web-ext": "^10.8.0"
+  },
+  "license": "MIT",
+  "description": "Sort and clean up YouTube Watch Later in Chrome and Firefox",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MattSG/watchlater-plus.git"
+  },
+  "engines": {
+    "node": ">=22.13"
+  }
+}

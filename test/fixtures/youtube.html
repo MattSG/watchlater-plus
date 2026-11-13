@@ -1,0 +1,251 @@
+<!doctype html>
+<html dark>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #0f0f0f;
+        color: #f1f1f1;
+        font: 14px Arial;
+      }
+      html:not([dark]) body {
+        background: white;
+        color: #0f0f0f;
+      }
+      header {
+        height: 64px;
+        padding: 20px 28px;
+        border-bottom: 1px solid #8883;
+        font-size: 20px;
+      }
+      main {
+        margin: 24px 28px 24px 280px;
+        max-width: 1500px;
+      }
+      aside {
+        position: fixed;
+        top: 90px;
+        left: 28px;
+        width: 220px;
+        height: 400px;
+        padding: 24px;
+        background: #8882;
+        border-radius: 12px;
+        font-size: 24px;
+      }
+      ytd-playlist-video-renderer {
+        display: flex;
+        align-items: center;
+        min-height: 112px;
+        gap: 12px;
+        padding: 8px;
+      }
+      .thumb {
+        width: 168px;
+        height: 94px;
+        flex-shrink: 0;
+        border-radius: 8px;
+        background: #34424f;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      .meta {
+        flex: 1;
+      }
+      ytd-channel-name {
+        display: block;
+        color: #888;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      ytd-menu-renderer button {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font-size: 24px;
+      }
+      ytd-menu-service-item-renderer {
+        display: block;
+        position: fixed;
+        z-index: 999;
+        right: 30px;
+        top: 260px;
+        background: #555;
+        padding: 20px;
+        cursor: pointer;
+      }
+      @media (max-width: 900px) {
+        aside {
+          display: none;
+        }
+        main {
+          margin: 16px;
+        }
+      }
+      @media (max-width: 500px) {
+        .thumb {
+          width: 96px;
+          height: 54px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>YouTube</header>
+    <ytd-browse
+      ><div
+        class="immersive-header-background"
+        style="
+          position: fixed;
+          inset: 64px 0 0;
+          background: linear-gradient(120deg, #fff, #1645be);
+          pointer-events: none;
+        "
+      ></div>
+      <div id="sidebar">
+        <ytd-playlist-header-renderer
+          ><aside>
+            Watch Later<button onclick="window.playAllClicked = true">
+              Play all</button
+            ><a
+              href="/watch?v=a&list=WL&shuffle=1"
+              onclick="
+                event.preventDefault();
+                window.shuffleClicked = true;
+              "
+              >Shuffle</a
+            ><button>Play all</button><button>Shuffle</button>
+          </aside></ytd-playlist-header-renderer
+        >
+      </div>
+      <main id="primary">
+        <ytd-alert-with-button-renderer
+          type="INFO"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px;
+            background: #8883;
+            margin-bottom: 20px;
+          "
+          ><span id="text">2 unavailable videos are hidden</span
+          ><button
+            aria-label="Dismiss notice"
+            onclick="this.parentElement.remove()"
+          >
+            ×
+          </button></ytd-alert-with-button-renderer
+        >
+        <ytd-sort-filter-sub-menu-renderer
+          ><button>Manual</button></ytd-sort-filter-sub-menu-renderer
+        >
+        <yt-sort-filter-sub-menu-renderer
+          ><button>
+            Date published (newest)
+          </button></yt-sort-filter-sub-menu-renderer
+        >
+        <div id="sort-filter-menu"><button>Sort</button></div>
+        <yt-dropdown-menu-view-model
+          ><button>Date published (newest)</button></yt-dropdown-menu-view-model
+        >
+        <div id="playlist"></div></main
+    ></ytd-browse>
+    <script>
+      window.noticeBeforeToolbar = {
+        display: getComputedStyle(
+          document.querySelector('ytd-alert-with-button-renderer'),
+        ).display,
+        toolbarMounted: !!document.querySelector('#wlp-panel'),
+      };
+      const rows = [
+        ['a', 'Zebra documentary', '20:00', '100%'],
+        ['b', 'Apple tutorial', '4:00', '25%'],
+        ['c', 'Middle live stream', 'LIVE', ''],
+      ];
+      function addRow([id, title, duration, progress]) {
+        const row = document.createElement('ytd-playlist-video-renderer');
+        row.innerHTML =
+          '<div class="thumb"></div><div class="meta"><a id="video-title" href="/watch?v=' +
+          id +
+          '">' +
+          title +
+          '</a><ytd-channel-name>Example channel</ytd-channel-name><ytd-thumbnail-overlay-time-status-renderer>' +
+          duration +
+          '</ytd-thumbnail-overlay-time-status-renderer><ytd-thumbnail-overlay-resume-playback-renderer><div id="progress" style="width:' +
+          progress +
+          '"></div></ytd-thumbnail-overlay-resume-playback-renderer></div><ytd-menu-renderer><button aria-label="Video menu">⋮</button></ytd-menu-renderer>';
+        row.querySelector('button').onclick = () => {
+          const item = document.createElement('ytd-menu-service-item-renderer');
+          item.textContent = 'Remove from Watch later';
+          item.onclick = () => {
+            row.remove();
+            item.remove();
+          };
+          document.body.append(item);
+        };
+        document.querySelector('#playlist').append(row);
+      }
+      rows.forEach(addRow);
+      const nativeLabels = [
+        'Most popular',
+        'Date published (newest)',
+        'Date published (oldest)',
+        'Date added (newest)',
+        'Date added (oldest)',
+        'Manual',
+      ];
+      for (const button of document.querySelectorAll(
+        'ytd-sort-filter-sub-menu-renderer button, yt-sort-filter-sub-menu-renderer button, yt-dropdown-menu-view-model button, #sort-filter-menu button',
+      )) {
+        button.onclick = () => {
+          const menu = document.createElement('div');
+          for (const label of nativeLabels) {
+            const item = document.createElement(
+              'ytd-menu-navigation-item-renderer',
+            );
+            item.style.display = 'block';
+            item.textContent = label;
+            item.onclick = () => {
+              window.lastNativeSort = label;
+              button.textContent = label;
+              const order =
+                label === 'Most popular'
+                  ? ['b', 'c', 'a']
+                  : label.endsWith('(oldest)')
+                    ? ['c', 'b', 'a']
+                    : ['a', 'b', 'c'];
+              for (const id of order) {
+                const row = document
+                  .querySelector('a#video-title[href="/watch?v=' + id + '"]')
+                  .closest('ytd-playlist-video-renderer');
+                document.querySelector('#playlist').append(row);
+              }
+              menu.remove();
+            };
+            menu.append(item);
+          }
+          button.parentElement.append(menu);
+        };
+      }
+      const continuation = document.createElement(
+        'ytd-continuation-item-renderer',
+      );
+      continuation.textContent = 'More videos available';
+      document.querySelector('#playlist').append(continuation);
+      window.navigateFixture = (url) => {
+        history.pushState({}, '', url);
+        document.dispatchEvent(new Event('yt-navigate-finish'));
+      };
+      window.addFixtureRow = () => addRow(['d', 'Another video', '9:00', '']);
+    </script>
+  </body>
+</html>
