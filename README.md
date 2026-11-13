@@ -38,4 +38,4 @@ npm ci
 npm run validate
 ```
 
-[Publishing & browser tests](PUBLISHING.md) · [Privacy](PRIVACY.md) · [MIT license](LICENSE)
+[Builds & browser tests](BUILDING.md) · [Privacy](PRIVACY.md) · [MIT license](LICENSE)
