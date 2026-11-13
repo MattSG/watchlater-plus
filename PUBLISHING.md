@@ -4,6 +4,10 @@ CI runs ESLint, formatting, unit tests, packaging, Mozilla validation, and Chrom
 and Firefox browser harnesses. ZIP artifacts contain only the manifest, extension
 code, styles and license. No tests, profiles, credentials or node_modules ship.
 
+Actions are pinned to full commit SHAs in the workflows and recorded in
+`.github/actions-lock.json`. Update both together; `npm run lint:actions` checks
+they match. `.gitattributes` keeps checkouts in LF format, including Windows CI.
+
 ## Build a release
 
 1. Bump `version` in both `package.json` and `manifest.json`, then run `npm install --package-lock-only`.
