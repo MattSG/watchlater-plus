@@ -6,6 +6,10 @@ const lock = { 'actions/checkout': { sha } };
 
 test('Actions require locked full SHAs', () => {
   assert.deepEqual(
+    checkActions('uses: ./.github/workflows/firefox.yml', lock),
+    [],
+  );
+  assert.deepEqual(
     checkActions(`- uses: actions/checkout@${sha} # v4`, lock),
     [],
   );

@@ -25,7 +25,7 @@ Download your browser's file from the [latest release](https://github.com/MattSG
 
 **Chrome:** Extract the Chrome ZIP. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the extracted folder.
 
-**Firefox 142+:** Open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**, and select the Firefox XPI. Permanent installation needs Mozilla signing.
+**Firefox 142+:** For a signed release, open `about:addons` → **Install Add-on From File** and select the XPI. Unsigned builds use **Load Temporary Add-on** in `about:debugging` and last until Firefox exits. The release notes identify signed packages.
 
 Open [Watch Later](https://www.youtube.com/playlist?list=WL). After updating, reload the extension and refresh YouTube.
 

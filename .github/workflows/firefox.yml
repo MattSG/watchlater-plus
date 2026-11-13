@@ -1,0 +1,39 @@
+name: Sign Firefox release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: GitHub release tag to sign, or latest
+        required: true
+        default: latest
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+permissions:
+  contents: write
+concurrency:
+  group: firefox-signing
+  cancel-in-progress: false
+jobs:
+  sign:
+    runs-on: windows-latest
+    environment: firefox-signing
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.1'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install firefox
+      - name: Sign and attach Firefox package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
+          WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: node scripts/sign-firefox.cjs

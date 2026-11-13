@@ -5,6 +5,7 @@ function checkActions(source, lock) {
   const errors = [];
   for (const match of source.matchAll(/^\s*-?\s*uses:\s*([^\s#]+).*$/gm)) {
     const reference = match[1];
+    if (/^\.\/\.github\/workflows\/[\w.-]+\.ya?ml$/.test(reference)) continue;
     const split = reference.lastIndexOf('@');
     const action = reference.slice(0, split);
     const sha = reference.slice(split + 1);
