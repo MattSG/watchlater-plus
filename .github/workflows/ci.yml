@@ -10,6 +10,8 @@ jobs:
   validate:
     runs-on: windows-latest
     timeout-minutes: 15
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -17,11 +19,16 @@ jobs:
           node-version: '26.13.1'
           cache: npm
       - run: npm ci
+      - name: Set CalVer
+        id: version
+        run: node -e "console.log('version='+require('./scripts/build.cjs').calver())" >> $env:GITHUB_OUTPUT
       - run: npm run validate
   browsers:
     needs: validate
     runs-on: windows-latest
     timeout-minutes: 15
+    env:
+      BUILD_VERSION: ${{ needs.validate.outputs.version }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,9 +36,11 @@ jobs:
           - browser: chromium
             target: chrome
             test: test:browser
+            extension: zip
           - browser: firefox
             target: firefox
             test: test:firefox
+            extension: xpi
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -44,8 +53,8 @@ jobs:
       - run: npm run ${{ matrix.test }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: watchlater-plus-${{ matrix.target }}
-          path: dist/watchlater-plus-${{ matrix.target }}-*.zip
+          path: dist/watchlater-plus-${{ matrix.target }}-*.${{ matrix.extension }}
+          archive: false
           if-no-files-found: error
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
@@ -55,3 +64,30 @@ jobs:
             output/playwright/*.png
             output/playwright/results.json
             output/firefox/*.png
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [validate, browsers]
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.validate.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: watchlater-plus-*
+          path: release
+          merge-multiple: true
+          skip-decompress: true
+      - name: Create GitHub release
+        run: |
+          $files = @("release/watchlater-plus-chrome-$env:VERSION.zip", "release/watchlater-plus-firefox-$env:VERSION.xpi")
+          foreach ($file in $files) { if (!(Test-Path -LiteralPath $file)) { throw "Missing package: $file" } }
+          gh release view "v$env:VERSION" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload "v$env:VERSION" @files --clobber
+          } else {
+            gh release create "v$env:VERSION" @files --target $env:GITHUB_SHA --title "Watch Later+ $env:VERSION" --notes 'Chrome: extract the ZIP and use Load unpacked in chrome://extensions. Firefox: select the unsigned XPI in about:debugging using Load Temporary Add-on. Firefox installs last until restart. These packages are not submitted to either extension store.'
+          }

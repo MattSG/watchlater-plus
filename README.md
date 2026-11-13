@@ -21,9 +21,11 @@ _Preview with sample videos._
 
 ## Install
 
-**Chrome:** [Download the source](https://github.com/MattSG/watchlater-plus/archive/refs/heads/main.zip), unzip it, then open `chrome://extensions`. Enable **Developer mode**, click **Load unpacked**, and select the folder containing `manifest.json`.
+Download your browser's file from the [latest release](https://github.com/MattSG/watchlater-plus/releases/latest).
 
-**Firefox 142+:** Run `npm ci` and `npm run build`. Open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**, and select `dist/firefox/manifest.json`. Permanent installation needs Mozilla signing.
+**Chrome:** Extract the Chrome ZIP. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the extracted folder.
+
+**Firefox 142+:** Open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**, and select the Firefox XPI. Permanent installation needs Mozilla signing.
 
 Open [Watch Later](https://www.youtube.com/playlist?list=WL). After updating, reload the extension and refresh YouTube.
 

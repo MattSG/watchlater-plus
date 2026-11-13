@@ -5,6 +5,16 @@ const { zipSync } = require('fflate');
 const root = path.resolve(__dirname, '..');
 const files = ['core.js', 'content.js', 'content.css', 'LICENSE'];
 
+function calver(
+  date = new Date(),
+  sequence = process.env.GITHUB_RUN_NUMBER || 0,
+) {
+  const build = Number(sequence);
+  if (!Number.isInteger(build) || build < 0 || build > 65535)
+    throw new Error('Build number must be an integer between 0 and 65535.');
+  return `${date.getUTCFullYear()}.${date.getUTCMonth() + 1}.${date.getUTCDate()}.${build}`;
+}
+
 async function build() {
   const manifest = JSON.parse(
     await readFile(path.join(root, 'manifest.json'), 'utf8'),
@@ -14,10 +24,19 @@ async function build() {
   );
   if (pkg.version !== manifest.version)
     throw new Error('Package and manifest versions differ.');
+  const version = process.env.BUILD_VERSION || calver();
+  if (
+    !/^\d{1,5}(?:\.\d{1,5}){3}$/.test(version) ||
+    version.split('.').some((part) => Number(part) > 65535)
+  )
+    throw new Error(
+      'BUILD_VERSION must contain four browser-compatible numeric components.',
+    );
   for (const browser of ['chrome', 'firefox']) {
     const directory = path.join(root, 'dist', browser);
     await mkdir(directory, { recursive: true });
     const browserManifest = structuredClone(manifest);
+    browserManifest.version = version;
     if (browser === 'firefox')
       browserManifest.browser_specific_settings = {
         gecko: {
@@ -42,11 +61,12 @@ async function build() {
     const archive = path.join(
       root,
       'dist',
-      `watchlater-plus-${browser}-${manifest.version}.zip`,
+      `watchlater-plus-${browser}-${version}.${browser === 'firefox' ? 'xpi' : 'zip'}`,
     );
     await writeFile(archive, zipSync(entries));
     console.log(archive);
   }
+  return version;
 }
 
 if (require.main === module)
@@ -54,4 +74,4 @@ if (require.main === module)
     console.error(error.message);
     process.exitCode = 1;
   });
-module.exports = { build };
+module.exports = { build, calver };
