@@ -44,7 +44,7 @@ jobs:
           "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
       - name: Upload and submit for review
         env:
-          CHROME_PUBLISHER_ID: 5ccd01dc-065c-420a-a91a-188a60ba504f
+          CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
           CHROME_EXTENSION_ID: cdldkcnknmpifebmelhpncicccmgngmo
           CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
           CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
