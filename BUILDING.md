@@ -61,3 +61,21 @@ automatically. Credentials are never used on pull requests.
 Install a signed XPI through `about:addons` → **Install Add-on From File**.
 Signing does not create a public AMO listing. See
 [Mozilla's distribution guide](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/).
+
+## Chrome Store deployment
+
+The **Deploy Chrome release** workflow uploads an existing release ZIP and
+submits it for Google review. It targets `cdldkcnknmpifebmelhpncicccmgngmo`.
+The existing public listing and visibility are preserved.
+
+Follow [Google's OAuth setup](https://developer.chrome.com/docs/webstore/using-api)
+and add `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, and `CHROME_REFRESH_TOKEN`
+as secrets in the **chrome-publishing** GitHub environment. Use your own OAuth
+client in OAuth Playground with the `https://www.googleapis.com/auth/chromewebstore`
+scope. Use an OAuth app in production for durable refresh tokens; external apps
+in testing can issue tokens that expire after seven days.
+
+Run the workflow manually with a release tag or `latest` for the first submission.
+After success, set repository variable `CHROME_PUBLISHING_ENABLED=true` to submit
+future main-branch releases automatically after both browser checks pass.
+Publication still depends on Google review. Never put credentials in source files.

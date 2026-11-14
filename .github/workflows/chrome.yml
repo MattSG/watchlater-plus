@@ -1,0 +1,52 @@
+name: Deploy Chrome release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: GitHub release tag to submit, or latest
+        required: true
+        default: latest
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: chrome-publishing
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: windows-latest
+    environment: chrome-publishing
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.1'
+          cache: npm
+      - run: npm ci
+      - name: Download release package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $tagArgs = @()
+          if ($env:RELEASE_TAG -ne 'latest') { $tagArgs = @($env:RELEASE_TAG) }
+          $release = gh release view @tagArgs --json tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $release.tagName -notmatch '^v\d{4}\.\d{1,2}\.\d{1,2}\.\d{1,5}$') { throw 'Expected a CalVer release.' }
+          $version = $release.tagName.Substring(1)
+          gh release download $release.tagName --pattern "watchlater-plus-chrome-$version.zip" --dir package
+          if ($LASTEXITCODE -ne 0) { throw 'Release download failed.' }
+          "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+      - name: Upload and submit for review
+        env:
+          CHROME_PUBLISHER_ID: 5ccd01dc-065c-420a-a91a-188a60ba504f
+          CHROME_EXTENSION_ID: cdldkcnknmpifebmelhpncicccmgngmo
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: node scripts/publish-chrome.cjs "package/watchlater-plus-chrome-$env:RELEASE_VERSION.zip"

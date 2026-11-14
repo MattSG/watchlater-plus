@@ -99,3 +99,9 @@ jobs:
     uses: ./.github/workflows/firefox.yml
     with:
       tag: v${{ needs.validate.outputs.version }}
+  chrome-publishing:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.CHROME_PUBLISHING_ENABLED == 'true'
+    needs: [validate, release]
+    uses: ./.github/workflows/chrome.yml
+    with:
+      tag: v${{ needs.validate.outputs.version }}
